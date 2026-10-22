@@ -1,0 +1,6 @@
+# Create a separate tool from an existing operations app
+Use the specified repository and the new business workflow. Read its README, AGENTS.md and verification skill. Reuse the existing queue/detail/action/history components and styling. Prefer an additional clearly named module in the same application for this prototype, with a separate route and dataset; do not copy a whole codebase unless explicitly requested.
+
+Identify which fields, status labels and allowed actions belong to the new workflow. Remove original-domain fields from the new interface. Create new synthetic seed records. Keep the original tool's records and history separate; test that changing one cannot change the other. Apply server-side validation and existing authorization helpers to the new actions. Do not represent a mock merchant review queue as complete regulated KYC.
+
+Implement on a new branch, run existing tests and a meaningful data-isolation test, then browser-test both apps. Return the new route/preview, a short recording if supported, GitHub PR, checks and limitations. Merge/redeploy only when explicitly authorized and verified. Record the reused pieces and the new domain-specific code, with actual elapsed time. Do not create additional Devin sessions. Honor the timebox.
