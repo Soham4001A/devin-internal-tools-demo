@@ -1,0 +1,8 @@
+# Update an internal operations tool
+Turn the business request into a small verified change to the specified repository. Work from its current main branch in a new branch. Read AGENTS.md, README and .agents/skills/verify-internal-tool/SKILL.md first; do not depend on the original build conversation.
+
+Explain the requested behavior in plain language, then implement it using existing components and conventions. Keep domain rules on the server where needed; do not weaken authorization or decision history. Preserve existing data. For any destructive migration or change to identity, privileges or real financial execution, stop and identify the additional review required.
+
+Translate the request into observable acceptance criteria. Run relevant tests and add a meaningful regression check for changed behavior. Browser-test the happy path and one important exclusion/boundary, and return a short recording if available. Open a PR with a short problem/result description, checks and remaining limitations. Return the preview/recording, PR link and a plain-language summary. Merge/redeploy only when the task explicitly authorizes it and verification passes. Never claim a preview was deployed when it is only a local server.
+
+If this is a synthetic take-home demo, honor its deadline and keep changes small. Include actual elapsed time and any human intervention. Do not create additional Devin sessions unless requested.

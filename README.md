@@ -129,3 +129,7 @@ endpoint (persona check, reason ≥3 chars, 409 on repeat, single transaction), 
 ## Limitations
 Synthetic prototype: demo personas (no SSO), SQLite single-node storage, history is not tamper-proof, no notifications or
 document upload; "missing documents" is a static list on the case. Merchant Reviews is not a KYC/KYB or compliance tool.
+
+## Built with Devin
+
+See [the tested Devin workflow](docs/devin-workflow.md) for reusable Playbook templates, completed session/PR links, version tags and the actual setup interventions. The application was built by Devin; orchestration, review and presentation preparation were assisted by Codex.

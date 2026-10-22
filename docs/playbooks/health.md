@@ -1,0 +1,6 @@
+# Check a demo internal tool
+Inspect only the repository and demo URL named in the task. Read the verification instructions. This is a synthetic demonstration, not production monitoring.
+
+Verify the deployed frontend loads, the backend responds, the refunds queue loads records, status/search filtering behaves as documented, and the separate merchant module loads if present. If asked to exercise a decision, use only a designated synthetic test fixture with an isolated test workspace or the documented safe reset; do not change arbitrary records. Run the relevant automated regression tests locally where dependencies are available. Browser-test the visible flow and capture a short recording if supported.
+
+Report each check with pass/fail, the exact URL and commit tested, elapsed time, and any evidence links. Distinguish deployed checks from local checks. If something fails, investigate, provide a reproducible description and suggest the smallest fix. Prepare a fix PR only when the task authorizes it; never silently merge or deploy. Do not start additional sessions, create schedules, or change permissions. A check that could not run is unverified, not passed.
