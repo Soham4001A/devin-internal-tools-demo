@@ -24,16 +24,18 @@ cd frontend && npm run build && npx eslint src     # expect no errors
 cd frontend && npm run build
 cd ../backend && .venv/bin/python -m app.seed && .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
 curl -s localhost:8000/api/tools/refunds/summary -H 'X-Demo-Persona: viewer'
-# expect {"total":12,"counts":{"pending":7,"approved":3,"rejected":2},...} right after a reset
+# expect {"total":12,"counts":{"pending":7,"approved":3,"rejected":2},...,"overdue_pending":4} right after a reset
 ```
 For a shareable session preview, expose port 8000 with the browser preview tool.
 
 ## Browser journey (repeatable; resets refunds data first)
 ```bash
 cd backend && .venv/bin/pip install playwright==1.49.1 && .venv/bin/playwright install chromium
-.venv/bin/python ../scripts/e2e.py --shots ../artifacts --video ../artifacts/video --slow 250   # prints "E2E OK"
+.venv/bin/python ../scripts/e2e.py --shots ../artifacts --video ../artifacts/video --slow 250 --db data/app.db   # prints "E2E OK"
+# If Playwright's chromium download is blocked, set CHROME_PATH to a local Chrome binary.
+# --db inserts 47h59m/48h01m pending + old approved rows to check the 48h boundary, then resets.
 ```
-Covers: queue load + counts, search, status filter, viewer view-only, reviewer reason required, approve,
+Covers: queue load + counts, search, status filter, Over 48 hours filter/count (+ boundary with --db), viewer view-only, reviewer reason required, approve,
 history entry with reason/actor/timestamp, counts update, persistence after reload.
 Artifacts directory is not committed except curated images in `docs/`.
 

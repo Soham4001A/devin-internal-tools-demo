@@ -122,3 +122,58 @@ def test_records_isolated_by_tool(client):
     conn = db.connect()
     assert conn.execute("SELECT COUNT(*) FROM records WHERE tool='other'").fetchone()[0] == 1
     conn.close()
+
+
+def _insert(ref, status, hours_ago, tool="refunds"):
+    from datetime import datetime, timedelta, timezone
+    from app import db
+    ts = db.now_iso(datetime.now(timezone.utc) - timedelta(hours=hours_ago))
+    conn = db.connect()
+    conn.execute("INSERT INTO records(tool, ref, status, data, submitted_at, updated_at) VALUES (?,?,?,?,?,?)",
+                 (tool, ref, status, '{"customer": "Boundary Test"}', ts, ts))
+    conn.close()
+
+
+def test_overdue_filter_oldest_first_pending_only(client):
+    items = client.get("/api/tools/refunds/records?overdue=true", headers=V).json()["items"]
+    assert [i["ref"] for i in items] == ["RF-1007", "RF-1006", "RF-1005", "RF-1004"]
+    s = client.get("/api/tools/refunds/summary", headers=V).json()
+    assert s["overdue_pending"] == 4 and s["overdue_hours"] == 48
+    # RF-1010 (rejected, 70h) and RF-1011 (approved, 120h) are old but never overdue
+    for st in ("approved", "rejected"):
+        assert client.get(f"/api/tools/refunds/records?overdue=true&status={st}", headers=V).json()["items"] == []
+    # combines with search and status filter
+    items = client.get("/api/tools/refunds/records?overdue=true&q=skyward", headers=V).json()["items"]
+    assert [i["ref"] for i in items] == ["RF-1005"]
+    items = client.get("/api/tools/refunds/records?overdue=true&status=pending", headers=V).json()["items"]
+    assert len(items) == 4
+
+
+def test_overdue_48h_boundary(client):
+    _insert("RF-B4759", "pending", 47 + 59 / 60)
+    _insert("RF-B4801", "pending", 48 + 1 / 60)
+    _insert("RF-BAPPR", "approved", 200)
+    refs = [i["ref"] for i in client.get("/api/tools/refunds/records?overdue=true", headers=V).json()["items"]]
+    assert "RF-B4801" in refs and "RF-B4759" not in refs and "RF-BAPPR" not in refs
+    assert client.get("/api/tools/refunds/summary", headers=V).json()["overdue_pending"] == 5
+
+
+def test_is_overdue_exact_boundary():
+    from datetime import datetime, timedelta, timezone
+    from app.main import is_overdue
+    now = datetime(2026, 10, 22, 12, 0, tzinfo=timezone.utc)
+    at = lambda h, st="pending": {"status": st, "submitted_at": (now - timedelta(hours=h)).isoformat()}
+    assert not is_overdue(at(48), now)
+    assert is_overdue(at(48 + 1 / 3600), now)
+    assert not is_overdue(at(47.99), now)
+    assert not is_overdue(at(100, "approved"), now)
+    assert not is_overdue(at(100, "rejected"), now)
+
+
+def test_decided_overdue_leaves_count(client):
+    rid = client.get("/api/tools/refunds/records?overdue=true", headers=V).json()["items"][0]["id"]
+    client.post(f"/api/tools/refunds/records/{rid}/decision", headers=R,
+                json={"action": "reject", "reason": "Outside policy window"})
+    assert client.get("/api/tools/refunds/summary", headers=V).json()["overdue_pending"] == 3
+    refs = [i["ref"] for i in client.get("/api/tools/refunds/records?overdue=true", headers=V).json()["items"]]
+    assert refs == ["RF-1006", "RF-1005", "RF-1004"]

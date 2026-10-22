@@ -46,13 +46,15 @@ p { margin: 0; }
 .banner { background: var(--teal-soft); border: 1px solid #c4e5e3; color: #0b5c5e; border-radius: 8px; padding: 8px 12px; font-size: 12.5px; margin-bottom: 18px; }
 .page-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 14px; }
 
-.summary { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+.summary { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
 .stat { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; }
 .stat-label { font-size: 12px; color: var(--muted); }
 .stat-value { font-size: 22px; font-weight: 650; margin-top: 2px; font-variant-numeric: tabular-nums; }
 .stat-pending .stat-value { color: var(--amber); }
 .stat-approved .stat-value { color: var(--green); }
 .stat-rejected .stat-value { color: var(--red); }
+.stat-overdue .stat-value { color: var(--red); }
+.toggle { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; cursor: pointer; }
 
 .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
 .search, .filter, textarea { font: inherit; border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; background: #fff; color: var(--text); }

@@ -57,6 +57,8 @@ intended demo behavior, **not** an access-control model.
 - Reason required (≥3 non-space chars) → **422** otherwise.
 - Status update + history row are written in one `BEGIN IMMEDIATE` transaction (with a guarded `UPDATE … WHERE status=?`).
 - Every query is scoped by tool key; reset only touches one tool.
+- "Over 48 hours" filter (`?overdue=true`) and the "Pending over 48h" count include only `pending` requests submitted
+  strictly more than 48h ago, oldest first; approved/rejected never appear. Works together with search and status.
 
 ## Demo reset
 - CLI: `cd backend && .venv/bin/python -m app.seed [--tool refunds]`
