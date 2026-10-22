@@ -13,9 +13,11 @@ type Props = {
   persona: Persona | undefined;
   onClose: () => void;
   onDecide: (action: string, reason: string) => Promise<void>;
+  reasonPlaceholder: string;
+  decisionFootnote: string;
 };
 
-export function RecordDrawer({ tool, detail, loading, error, persona, onClose, onDecide }: Props) {
+export function RecordDrawer({ tool, detail, loading, error, persona, onClose, onDecide, reasonPlaceholder, decisionFootnote }: Props) {
   useEffect(() => {
     const h = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", h);
@@ -54,7 +56,16 @@ export function RecordDrawer({ tool, detail, loading, error, persona, onClose, o
             </dl>
             <section>
               <h3>Decision</h3>
-              <DecisionPanel key={r.id} actions={tool.actions} record={r} persona={persona} onDecide={onDecide} />
+              <DecisionPanel
+                key={r.id}
+                actions={tool.actions}
+                record={r}
+                persona={persona}
+                onDecide={onDecide}
+                reasonPlaceholder={reasonPlaceholder}
+                footnote={decisionFootnote}
+                recordLabel={tool.record_label}
+              />
             </section>
             <section>
               <h3>History</h3>

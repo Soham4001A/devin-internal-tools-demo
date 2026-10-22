@@ -97,7 +97,7 @@ def _seed_tool(conn: sqlite3.Connection, key: str, in_tx: bool = False) -> None:
         conn.execute(
             "INSERT INTO events(tool, record_id, action, actor, actor_role, reason, from_status, to_status, created_at)"
             " VALUES (?,?,?,?,?,?,?,?,?)",
-            (key, rid, "submitted", item["data"].get("customer", "system"), "requester", None, None, "pending", now_iso(submitted)),
+            (key, rid, "submitted", item["data"].get(tool.requester_field, "system"), "requester", None, None, "pending", now_iso(submitted)),
         )
         d = item.get("decision")
         if d:

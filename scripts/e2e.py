@@ -3,7 +3,8 @@
 Usage (server already running on BASE_URL, default http://localhost:8000):
   cd backend && .venv/bin/pip install playwright==1.49.1 && .venv/bin/playwright install chromium
   .venv/bin/python ../scripts/e2e.py [--video out_dir] [--shots out_dir]
-Resets the refunds demo data first, so it is repeatable.
+Resets refunds and merchant_reviews demo data first, so it is repeatable.
+Then switches to Merchant Reviews via the sidebar, decides a case and verifies refunds are unchanged.
 """
 import argparse
 import os
@@ -22,7 +23,8 @@ ap.add_argument("--db", default=None, help="SQLite path of the running server; e
 a = ap.parse_args()
 os.makedirs(a.shots, exist_ok=True)
 
-urllib.request.urlopen(urllib.request.Request(f"{BASE}/api/demo/reset?tool=refunds", method="POST")).read()
+for _tool in ("refunds", "merchant_reviews"):
+    urllib.request.urlopen(urllib.request.Request(f"{BASE}/api/demo/reset?tool={_tool}", method="POST")).read()
 
 with sync_playwright() as p:
     browser = p.chromium.launch(slow_mo=a.slow, executable_path=os.environ.get("CHROME_PATH") or None)
@@ -117,6 +119,75 @@ with sync_playwright() as p:
     page.get_by_label("Status filter").select_option("approved")
     page.get_by_test_id("row-RF-1004").click()
     expect(page.get_by_role("dialog").get_by_text("Carrier photos confirm damage")).to_be_visible()
+    page.wait_for_timeout(700)
+    page.get_by_label("Close").click()
+
+    # --- Merchant Reviews: separate route, data, state and history ---
+    page.get_by_label("Status filter").select_option("")
+    page.get_by_label("Search").fill("skyward")
+    expect(page.locator("tbody tr")).to_have_count(1)
+    page.get_by_role("link", name="Merchant Reviews").click()
+    expect(page).to_have_url(re.compile(r"/merchant-reviews$"))
+    expect(page.get_by_role("heading", name="Merchant reviews queue")).to_be_visible()
+    expect(page.get_by_label("Search")).to_have_value("")
+    expect(page.get_by_label("Status filter")).to_have_value("")
+    expect(page.locator("tbody tr")).to_have_count(8)
+    expect(page.locator(".stat-pending .stat-value")).to_have_text("5")
+    expect(page.locator("thead th")).to_have_text(
+        ["Case", "Merchant", "Business category", "Submitted", "Owner", "Missing documents", "Review status"])
+    expect(page.get_by_label("Over 48 hours")).to_have_count(0)
+    expect(page.locator(".stat-overdue")).to_have_count(0)
+    expect(page.get_by_text("Pending value")).to_have_count(0)
+    expect(page.get_by_test_id("row-RF-1001")).to_have_count(0)
+    page.wait_for_timeout(600)
+    page.screenshot(path=f"{a.shots}/06-merchant-queue.png")
+    page.get_by_label("Search").fill("insurance")
+    expect(page.locator("tbody tr td:first-child")).to_have_text(["MR-2003"])
+    page.get_by_label("Search").fill("")
+
+    page.get_by_label("Demo persona").select_option("viewer")
+    page.get_by_test_id("row-MR-2003").click()
+    drawer = page.get_by_role("dialog")
+    expect(drawer.get_by_text("Liability insurance certificate, Bank account letter")).to_be_visible()
+    expect(drawer.get_by_text("has view-only access")).to_be_visible()
+    page.wait_for_timeout(500)
+    page.screenshot(path=f"{a.shots}/07-merchant-viewer-readonly.png")
+    page.get_by_label("Close").click()
+
+    page.get_by_label("Demo persona").select_option("reviewer")
+    page.get_by_test_id("row-MR-2003").click()
+    drawer = page.get_by_role("dialog")
+    drawer.get_by_role("button", name="Reject").click()
+    expect(drawer.get_by_text("Enter a decision reason")).to_be_visible()
+    drawer.get_by_label(re.compile("Decision reason")).fill("Insurance certificate and bank letter still outstanding after reminders.")
+    drawer.get_by_role("button", name="Reject").click()
+    expect(drawer.locator(".badge-rejected")).to_be_visible()
+    expect(drawer.get_by_text("Insurance certificate and bank letter still outstanding")).to_be_visible()
+    expect(drawer.get_by_text("Priya Raman").first).to_be_visible()
+    expect(page.locator(".stat-pending .stat-value")).to_have_text("4")
+    expect(page.locator(".stat-rejected .stat-value")).to_have_text("2")
+    page.wait_for_timeout(700)
+    page.screenshot(path=f"{a.shots}/08-merchant-rejected-history.png")
+    page.get_by_label("Close").click()
+
+    # back to refunds: fresh search/selection, refund counts unchanged by merchant decision
+    page.get_by_role("link", name="Refunds Review").click()
+    expect(page).to_have_url(re.compile(r"/refunds$"))
+    expect(page.get_by_label("Search")).to_have_value("")
+    expect(page.get_by_role("dialog")).to_have_count(0)
+    expect(page.locator("tbody tr")).to_have_count(12)
+    expect(page.locator(".stat-pending .stat-value")).to_have_text("6")
+    expect(page.locator(".stat-rejected .stat-value")).to_have_text("2")
+    expect(page.locator(".stat-overdue .stat-value")).to_have_text("3")
+    page.get_by_test_id("row-RF-1004").click()
+    expect(page.get_by_role("dialog").get_by_text("Carrier photos confirm damage")).to_be_visible()
+    expect(page.get_by_role("dialog").get_by_text("Insurance certificate")).to_have_count(0)
+    page.get_by_label("Close").click()
+
+    # deep link + persistence for the merchant decision
+    page.goto(f"{BASE}/merchant-reviews")
+    page.get_by_label("Status filter").select_option("rejected")
+    expect(page.locator("tbody tr td:first-child")).to_have_text(["MR-2008", "MR-2003"])
     page.wait_for_timeout(700)
     ctx.close()
     browser.close()

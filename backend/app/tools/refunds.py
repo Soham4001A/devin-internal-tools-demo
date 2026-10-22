@@ -63,4 +63,7 @@ REFUNDS = ToolConfig(
         Action("reject", "Reject", "rejected", ("pending",)),
     ),
     seed=_seed,
+    overdue_filter=True,
+    value_field="amount_usd",
+    requester_field="customer",
 )

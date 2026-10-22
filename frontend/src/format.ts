@@ -12,5 +12,6 @@ export const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 export function cell(kind: string, v: unknown) {
   if (kind === "money") return money(v);
   if (kind === "datetime" && typeof v === "string") return dateTime(v);
+  if (kind === "list" && Array.isArray(v)) return v.length ? v.join(", ") : "None";
   return v == null || v === "" ? "—" : String(v);
 }

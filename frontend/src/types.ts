@@ -1,5 +1,5 @@
 export type Persona = { id: string; name: string; role: string; label: string; can_decide: boolean };
-export type Column = { key: string; label: string; kind: "text" | "money" | "datetime" | "status" };
+export type Column = { key: string; label: string; kind: "text" | "money" | "datetime" | "status" | "list" };
 export type Action = { key: string; label: string; to_status: string; from_statuses: string[]; requires_reason: boolean };
 export type ToolConfig = {
   key: string;
@@ -9,6 +9,7 @@ export type ToolConfig = {
   columns: Column[];
   detail_fields: Column[];
   actions: Action[];
+  features: { overdue_filter: boolean; value_summary: boolean };
 };
 export type RecordRow = { id: number; ref: string; status: string; submitted_at: string; updated_at: string } & Record<string, unknown>;
 export type HistoryEvent = {
@@ -22,4 +23,4 @@ export type HistoryEvent = {
   created_at: string;
 };
 export type Detail = { record: RecordRow; history: HistoryEvent[] };
-export type Summary = { total: number; counts: Record<string, number>; pending_amount_usd: number; overdue_pending: number; overdue_hours: number };
+export type Summary = { total: number; counts: Record<string, number>; pending_amount_usd: number | null; overdue_pending: number | null; overdue_hours: number };

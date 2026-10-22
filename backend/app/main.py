@@ -107,6 +107,8 @@ def list_records(tool: str, q: str = "", status: str = "", overdue: bool = False
     items = [_row(r) for r in rows]
     if status:
         items = [i for i in items if i["status"] == status]
+    if overdue and not cfg.overdue_filter:
+        raise HTTPException(400, "Over-48h filter is not enabled for this tool")
     if overdue:
         now = datetime.now(timezone.utc)
         items = sorted((i for i in items if is_overdue(i, now)), key=lambda i: i["submitted_at"])
@@ -132,9 +134,10 @@ def summary(tool: str, _: dict = Depends(persona)):
     counts = {s: 0 for s in cfg.statuses}
     for r in rows:
         counts[r["status"]] = r["n"]
-    pending_amount = round(sum(json.loads(a["data"]).get("amount_usd", 0) for a in amounts), 2)
+    pending_amount = (round(sum(json.loads(a["data"]).get(cfg.value_field, 0) for a in amounts), 2)
+                      if cfg.value_field else None)
     now = datetime.now(timezone.utc)
-    overdue = sum(1 for a in amounts if is_overdue(dict(a), now))
+    overdue = sum(1 for a in amounts if is_overdue(dict(a), now)) if cfg.overdue_filter else None
     return {"total": sum(counts.values()), "counts": counts, "pending_amount_usd": pending_amount,
             "overdue_pending": overdue, "overdue_hours": OVERDUE_HOURS}
 
@@ -177,7 +180,7 @@ def decide(tool: str, rid: int, body: DecisionIn, p: dict = Depends(persona)):
             raise HTTPException(404, "Record not found")
         if r["status"] not in action.from_statuses:
             conn.execute("ROLLBACK")
-            raise HTTPException(409, f"Already decided: this request is {r['status']}")
+            raise HTTPException(409, f"Already decided: this {cfg.record_label.lower()} is {r['status']}")
         ts = db.now_iso()
         cur = conn.execute(
             "UPDATE records SET status=?, updated_at=? WHERE tool=? AND id=? AND status=?",
