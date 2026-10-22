@@ -62,9 +62,10 @@ p { margin: 0; }
 .search:focus, .filter:focus, textarea:focus { outline: 2px solid var(--teal); outline-offset: -1px; }
 
 .table-wrap { background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: auto; }
-.queue { width: 100%; border-collapse: collapse; }
+.queue { width: 100%; min-width: 880px; border-collapse: collapse; }
 .queue th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600; padding: 9px 12px; border-bottom: 1px solid var(--line); background: #fbfaf7; white-space: nowrap; }
 .queue td { padding: 9px 12px; border-bottom: 1px solid #efede7; white-space: nowrap; }
+.queue td.wrap { white-space: normal; overflow-wrap: anywhere; min-width: 110px; max-width: 240px; line-height: 1.35; }
 .queue tbody tr { cursor: pointer; }
 .queue tbody tr:hover { background: #f4f8f8; }
 .queue tbody tr.selected { background: var(--teal-soft); }

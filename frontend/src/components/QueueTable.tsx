@@ -42,7 +42,7 @@ export function QueueTable({ columns, rows, loading, error, selectedId, onOpen, 
               data-testid={`row-${r.ref}`}
             >
               {columns.map((c) => (
-                <td key={c.key} className={c.kind === "money" ? "num" : undefined}>
+                <td key={c.key} className={c.kind === "money" ? "num" : c.kind === "text" || c.kind === "list" ? "wrap" : undefined}>
                   {c.kind === "status" ? (
                     <StatusBadge status={r.status} />
                   ) : c.kind === "datetime" ? (
