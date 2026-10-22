@@ -14,6 +14,10 @@ export function SummaryBar({ summary, statuses }: { summary: Summary | null; sta
           <div className="stat-value">{summary ? summary.counts[s] ?? 0 : "–"}</div>
         </div>
       ))}
+      <div className="stat stat-overdue">
+        <div className="stat-label">Pending over {summary?.overdue_hours ?? 48}h</div>
+        <div className="stat-value">{summary ? summary.overdue_pending : "–"}</div>
+      </div>
       <div className="stat">
         <div className="stat-label">Pending value</div>
         <div className="stat-value">{summary ? money(summary.pending_amount_usd) : "–"}</div>

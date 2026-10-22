@@ -17,6 +17,7 @@ export default function App() {
   const [personaId, setPersonaId] = useState<string>(() => localStorage.getItem(PERSONA_KEY) ?? "reviewer");
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("");
+  const [overdue, setOverdue] = useState(false);
   const [rows, setRows] = useState<RecordRow[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,7 +40,7 @@ export default function App() {
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const [list, s] = await Promise.all([api.list(toolKey, personaId, q, status), api.summary(toolKey, personaId)]);
+      const [list, s] = await Promise.all([api.list(toolKey, personaId, q, status, overdue), api.summary(toolKey, personaId)]);
       setRows(list.items);
       setSummary(s);
       setError(null);
@@ -48,7 +49,7 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  }, [toolKey, personaId, q, status]);
+  }, [toolKey, personaId, q, status, overdue]);
 
   useEffect(() => {
     const t = setTimeout(refresh, 150);
@@ -146,7 +147,11 @@ export default function App() {
               <option key={s} value={s}>{cap(s)}</option>
             ))}
           </select>
-          <span className="muted small">{loading ? "Refreshing…" : `${rows.length} shown`}</span>
+          <label className="toggle">
+            <input type="checkbox" checked={overdue} onChange={(e) => setOverdue(e.target.checked)} />
+            Over 48 hours
+          </label>
+          <span className="muted small">{loading ? "Refreshing…" : `${rows.length} shown${overdue ? " · pending over 48h, oldest first" : ""}`}</span>
         </div>
         <QueueTable
           columns={tool?.columns ?? []}

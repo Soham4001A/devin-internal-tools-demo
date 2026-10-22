@@ -22,4 +22,4 @@ export type HistoryEvent = {
   created_at: string;
 };
 export type Detail = { record: RecordRow; history: HistoryEvent[] };
-export type Summary = { total: number; counts: Record<string, number>; pending_amount_usd: number };
+export type Summary = { total: number; counts: Record<string, number>; pending_amount_usd: number; overdue_pending: number; overdue_hours: number };

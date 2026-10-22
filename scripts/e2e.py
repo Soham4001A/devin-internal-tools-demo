@@ -18,13 +18,14 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--video", default=None)
 ap.add_argument("--shots", default="artifacts")
 ap.add_argument("--slow", type=int, default=0)
+ap.add_argument("--db", default=None, help="SQLite path of the running server; enables 48h boundary rows")
 a = ap.parse_args()
 os.makedirs(a.shots, exist_ok=True)
 
 urllib.request.urlopen(urllib.request.Request(f"{BASE}/api/demo/reset?tool=refunds", method="POST")).read()
 
 with sync_playwright() as p:
-    browser = p.chromium.launch(slow_mo=a.slow)
+    browser = p.chromium.launch(slow_mo=a.slow, executable_path=os.environ.get("CHROME_PATH") or None)
     ctx = browser.new_context(viewport={"width": 1440, "height": 900},
                               record_video_dir=a.video, record_video_size={"width": 1440, "height": 900} if a.video else None)
     page = ctx.new_page()
@@ -38,6 +39,49 @@ with sync_playwright() as p:
     page.get_by_label("Search").fill("skyward")
     expect(page.locator("tbody tr")).to_have_count(1)
     page.get_by_label("Search").fill("")
+    page.get_by_label("Status filter").select_option("pending")
+    expect(page.locator("tbody tr")).to_have_count(7)
+
+    # over 48 hours: pending only, oldest first; approved/rejected never included
+    expect(page.locator(".stat-overdue .stat-value")).to_have_text("4")
+    page.get_by_label("Over 48 hours").check()
+    expect(page.locator("tbody tr")).to_have_count(4)
+    expect(page.locator("tbody tr td:first-child")).to_have_text(["RF-1007", "RF-1006", "RF-1005", "RF-1004"])
+    page.get_by_label("Status filter").select_option("approved")
+    expect(page.get_by_text("No requests match")).to_be_visible()
+    page.get_by_label("Status filter").select_option("")
+    page.get_by_label("Search").fill("skyward")
+    expect(page.locator("tbody tr td:first-child")).to_have_text(["RF-1005"])
+    page.get_by_label("Search").fill("")
+    expect(page.locator("tbody tr")).to_have_count(4)
+    page.wait_for_timeout(600)
+    page.screenshot(path=f"{a.shots}/04-over-48h.png")
+    if a.db:
+        import sqlite3
+        from datetime import datetime, timedelta, timezone
+        now = datetime.now(timezone.utc)
+        conn = sqlite3.connect(a.db)
+        for ref, st, h in (("RF-B4759", "pending", 47 + 59 / 60), ("RF-B4801", "pending", 48 + 1 / 60),
+                           ("RF-BOLDA", "approved", 300)):
+            ts = (now - timedelta(hours=h)).isoformat(timespec="seconds")
+            conn.execute("INSERT INTO records(tool, ref, status, data, submitted_at, updated_at) VALUES (?,?,?,?,?,?)",
+                         ("refunds", ref, st, '{"customer": "Boundary Test"}', ts, ts))
+        conn.commit()
+        conn.close()
+        page.reload()
+        page.get_by_label("Status filter").select_option("pending")
+        page.get_by_label("Over 48 hours").check()
+        expect(page.locator(".stat-overdue .stat-value")).to_have_text("5")
+        expect(page.locator("tbody tr td:first-child")).to_have_text(
+            ["RF-1007", "RF-1006", "RF-1005", "RF-1004", "RF-B4801"])
+        page.wait_for_timeout(600)
+        page.screenshot(path=f"{a.shots}/05-48h-boundary.png")
+        page.get_by_label("Over 48 hours").uncheck()
+        expect(page.get_by_test_id("row-RF-B4759")).to_be_visible()
+        page.wait_for_timeout(600)
+        urllib.request.urlopen(urllib.request.Request(f"{BASE}/api/demo/reset?tool=refunds", method="POST")).read()
+        page.reload()
+    page.get_by_label("Over 48 hours").uncheck()
     page.get_by_label("Status filter").select_option("pending")
     expect(page.locator("tbody tr")).to_have_count(7)
 
@@ -62,6 +106,7 @@ with sync_playwright() as p:
     expect(drawer.get_by_text("Carrier photos confirm damage")).to_be_visible()
     expect(drawer.get_by_text("decided. Decisions are final")).to_be_visible()
     expect(page.locator(".stat-pending .stat-value")).to_have_text("6")
+    expect(page.locator(".stat-overdue .stat-value")).to_have_text("3")
     page.wait_for_timeout(700)
     page.screenshot(path=f"{a.shots}/03-approved-history.png")
     page.get_by_label("Close").click()

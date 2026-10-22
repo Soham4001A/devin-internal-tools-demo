@@ -25,9 +25,10 @@ Run/test/deploy steps: README.md and `.agents/skills/verify-internal-tool/SKILL.
 2. Add an entry to `frontend/src/tools/index.ts`; make the nav switch `toolKey` (App currently uses the first entry).
 3. Add tests mirroring `backend/tests/test_api.py` for the new tool, including isolation from `refunds`.
 
-## Planned next change (not implemented yet)
-"Overdue" (pending > 48h) filter/count. Suggested approach: compute server-side in `list_records`/`summary` (e.g.
-`overdue=true` query param, `overdue` count), add a stat card + filter option, test with seeded RF-1004..RF-1007.
+## Over 48 hours (overdue) rule
+Server-side in `main.is_overdue`: status `pending` AND submitted strictly more than `OVERDUE_HOURS` (48) ago.
+`GET .../records?overdue=true` (combines with `q`/`status`, oldest first); `summary.overdue_pending` count.
+Approved/rejected are never overdue. Tests: `test_overdue_*`, `test_is_overdue_exact_boundary`.
 
 ## Checks before committing
 `cd backend && .venv/bin/python -m pytest -q`; `cd frontend && npm run build && npx eslint src`; run `scripts/e2e.py`.

@@ -1,6 +1,7 @@
 import json
 from contextlib import asynccontextmanager
 import os
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
@@ -47,6 +48,16 @@ def _row(r) -> dict:
             "submitted_at": r["submitted_at"], "updated_at": r["updated_at"], **data}
 
 
+OVERDUE_HOURS = 48
+
+
+def is_overdue(item: dict, now: datetime) -> bool:
+    """Pending and submitted strictly more than OVERDUE_HOURS before `now`."""
+    if item["status"] != "pending":
+        return False
+    return now - datetime.fromisoformat(item["submitted_at"]) > timedelta(hours=OVERDUE_HOURS)
+
+
 def _events(conn, tool: str, rid: int) -> list[dict]:
     rows = conn.execute(
         "SELECT * FROM events WHERE tool=? AND record_id=? ORDER BY created_at, id", (tool, rid)
@@ -81,7 +92,8 @@ def tool_config(tool: str):
 
 
 @app.get("/api/tools/{tool}/records")
-def list_records(tool: str, q: str = "", status: str = "", _: dict = Depends(persona)):
+def list_records(tool: str, q: str = "", status: str = "", overdue: bool = False,
+                 _: dict = Depends(persona)):
     cfg = get_tool(tool)
     if status and status not in cfg.statuses:
         raise HTTPException(400, "Unknown status")
@@ -95,6 +107,9 @@ def list_records(tool: str, q: str = "", status: str = "", _: dict = Depends(per
     items = [_row(r) for r in rows]
     if status:
         items = [i for i in items if i["status"] == status]
+    if overdue:
+        now = datetime.now(timezone.utc)
+        items = sorted((i for i in items if is_overdue(i, now)), key=lambda i: i["submitted_at"])
     if q.strip():
         needle = q.strip().lower()
         items = [i for i in items if any(needle in str(i.get(f, "")).lower() for f in cfg.search_fields)]
@@ -110,7 +125,7 @@ def summary(tool: str, _: dict = Depends(persona)):
             "SELECT status, COUNT(*) n, data FROM records WHERE tool=? GROUP BY status", (tool,)
         ).fetchall()
         amounts = conn.execute(
-            "SELECT data FROM records WHERE tool=? AND status='pending'", (tool,)
+            "SELECT status, data, submitted_at FROM records WHERE tool=? AND status='pending'", (tool,)
         ).fetchall()
     finally:
         conn.close()
@@ -118,7 +133,10 @@ def summary(tool: str, _: dict = Depends(persona)):
     for r in rows:
         counts[r["status"]] = r["n"]
     pending_amount = round(sum(json.loads(a["data"]).get("amount_usd", 0) for a in amounts), 2)
-    return {"total": sum(counts.values()), "counts": counts, "pending_amount_usd": pending_amount}
+    now = datetime.now(timezone.utc)
+    overdue = sum(1 for a in amounts if is_overdue(dict(a), now))
+    return {"total": sum(counts.values()), "counts": counts, "pending_amount_usd": pending_amount,
+            "overdue_pending": overdue, "overdue_hours": OVERDUE_HOURS}
 
 
 @app.get("/api/tools/{tool}/records/{rid}")

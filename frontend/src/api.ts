@@ -31,9 +31,9 @@ async function req<T>(path: string, persona: string, init?: RequestInit): Promis
 export const api = {
   personas: () => req<{ personas: Persona[]; default: string }>("/api/personas", ""),
   tool: (tool: string) => req<ToolConfig>(`/api/tools/${tool}`, ""),
-  list: (tool: string, persona: string, q: string, status: string) =>
+  list: (tool: string, persona: string, q: string, status: string, overdue = false) =>
     req<{ items: RecordRow[] }>(
-      `/api/tools/${tool}/records?${new URLSearchParams({ q, status })}`,
+      `/api/tools/${tool}/records?${new URLSearchParams({ q, status, ...(overdue ? { overdue: "true" } : {}) })}`,
       persona,
     ),
   summary: (tool: string, persona: string) => req<Summary>(`/api/tools/${tool}/summary`, persona),
