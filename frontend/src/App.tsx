@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "./api";
-import { TOOL_UIS } from "./tools";
+import { TOOL_UIS, toolForPath, type ToolUi } from "./tools";
 import type { Detail, Persona, RecordRow, Summary, ToolConfig } from "./types";
 import { cap } from "./format";
 import { SummaryBar } from "./components/SummaryBar";
@@ -10,11 +10,90 @@ import { RecordDrawer } from "./components/RecordDrawer";
 const PERSONA_KEY = "ops-workbench.demo-persona"; // UI preference only; permissions are enforced server-side.
 
 export default function App() {
-  const [toolKey] = useState(TOOL_UIS[0].key);
-  const ui = TOOL_UIS.find((t) => t.key === toolKey)!;
-  const [tool, setTool] = useState<ToolConfig | null>(null);
+  const [ui, setUi] = useState<ToolUi>(() => toolForPath(window.location.pathname));
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [personaId, setPersonaId] = useState<string>(() => localStorage.getItem(PERSONA_KEY) ?? "reviewer");
+  const [resetCount, setResetCount] = useState(0);
+  const [toast, setToast] = useState<string | null>(null);
+  const persona = personas.find((p) => p.id === personaId);
+
+  useEffect(() => {
+    api.personas().then((r) => setPersonas(r.personas)).catch(() => setPersonas([]));
+  }, []);
+  useEffect(() => localStorage.setItem(PERSONA_KEY, personaId), [personaId]);
+  useEffect(() => {
+    const onPop = () => setUi(toolForPath(window.location.pathname));
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+  useEffect(() => {
+    document.title = `${ui.navLabel} · Ops Workbench (demo)`;
+  }, [ui]);
+
+  const notify = useCallback((msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  }, []);
+
+  const navigate = (t: ToolUi) => {
+    if (t.key === ui.key) return;
+    window.history.pushState(null, "", t.path);
+    setUi(t);
+  };
+
+  const reset = async () => {
+    if (!confirm(`Reset ${ui.navLabel}? All decisions in this tool will be replaced by the original synthetic fixtures.`)) return;
+    await api.reset(ui.key);
+    setResetCount((n) => n + 1);
+    notify(`${ui.navLabel} demo data reset`);
+  };
+
+  return (
+    <div className="shell">
+      <nav className="nav" aria-label="Tools">
+        <div className="brand">
+          <span className="brand-mark">◆</span> Ops Workbench
+        </div>
+        <div className="nav-section">Tools</div>
+        {TOOL_UIS.map((t) => (
+          <a
+            key={t.key}
+            className={`nav-item ${t.key === ui.key ? "active" : ""}`}
+            href={t.path}
+            aria-current={t.key === ui.key ? "page" : undefined}
+            onClick={(e) => {
+              e.preventDefault();
+              navigate(t);
+            }}
+          >
+            {t.navLabel}
+          </a>
+        ))}
+        <div className="nav-foot">
+          <div className="nav-section">Demo persona</div>
+          <select aria-label="Demo persona" className="persona" value={personaId} onChange={(e) => setPersonaId(e.target.value)}>
+            {personas.map((p) => (
+              <option key={p.id} value={p.id}>{p.label}</option>
+            ))}
+          </select>
+          <div className="muted-nav small">
+            {persona ? `${cap(persona.role)} · ${persona.can_decide ? "can decide" : "view only"}` : ""}
+          </div>
+          <button className="btn btn-nav" onClick={reset}>Reset demo data</button>
+        </div>
+      </nav>
+      {/* Keyed by tool: search, filters, selection and drawer state never carry over between tools. */}
+      <ToolView key={`${ui.key}:${resetCount}`} ui={ui} personaId={personaId} persona={persona} notify={notify} />
+      {toast && <div className="toast" role="status">{toast}</div>}
+    </div>
+  );
+}
+
+type ToolViewProps = { ui: ToolUi; personaId: string; persona: Persona | undefined; notify: (msg: string) => void };
+
+function ToolView({ ui, personaId, persona, notify }: ToolViewProps) {
+  const toolKey = ui.key;
+  const [tool, setTool] = useState<ToolConfig | null>(null);
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("");
   const [overdue, setOverdue] = useState(false);
@@ -26,21 +105,20 @@ export default function App() {
   const [detail, setDetail] = useState<Detail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
-
-  const persona = personas.find((p) => p.id === personaId);
 
   useEffect(() => {
-    api.personas().then((r) => setPersonas(r.personas)).catch((e) => setError(e.message));
     api.tool(toolKey).then(setTool).catch((e) => setError(e.message));
   }, [toolKey]);
 
-  useEffect(() => localStorage.setItem(PERSONA_KEY, personaId), [personaId]);
+  const overdueEnabled = tool?.features.overdue_filter ?? false;
 
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const [list, s] = await Promise.all([api.list(toolKey, personaId, q, status, overdue), api.summary(toolKey, personaId)]);
+      const [list, s] = await Promise.all([
+        api.list(toolKey, personaId, q, status, overdue && overdueEnabled),
+        api.summary(toolKey, personaId),
+      ]);
       setRows(list.items);
       setSummary(s);
       setError(null);
@@ -49,7 +127,7 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  }, [toolKey, personaId, q, status, overdue]);
+  }, [toolKey, personaId, q, status, overdue, overdueEnabled]);
 
   useEffect(() => {
     const t = setTimeout(refresh, 150);
@@ -76,54 +154,15 @@ export default function App() {
     if (openId == null) return;
     const d = await api.decide(toolKey, personaId, openId, action, reason);
     setDetail(d);
-    setToast(`${d.record.ref} ${d.record.status}`);
-    setTimeout(() => setToast(null), 3000);
+    notify(`${d.record.ref} ${d.record.status}`);
     refresh();
-  };
-
-  const reset = async () => {
-    if (!confirm("Reset the demo? All decisions in this tool will be replaced by the original synthetic fixtures.")) return;
-    await api.reset(toolKey);
-    close();
-    refresh();
-    setToast("Demo data reset");
-    setTimeout(() => setToast(null), 3000);
   };
 
   return (
-    <div className="shell">
-      <nav className="nav">
-        <div className="brand">
-          <span className="brand-mark">◆</span> Ops Workbench
-        </div>
-        <div className="nav-section">Tools</div>
-        {TOOL_UIS.map((t) => (
-          <a key={t.key} className={`nav-item ${t.key === toolKey ? "active" : ""}`} href="#" onClick={(e) => e.preventDefault()}>
-            {t.navLabel}
-          </a>
-        ))}
-        <div className="nav-foot">
-          <div className="nav-section">Demo persona</div>
-          <select
-            aria-label="Demo persona"
-            className="persona"
-            value={personaId}
-            onChange={(e) => setPersonaId(e.target.value)}
-          >
-            {personas.map((p) => (
-              <option key={p.id} value={p.id}>{p.label}</option>
-            ))}
-          </select>
-          <div className="muted-nav small">
-            {persona ? `${cap(persona.role)} · ${persona.can_decide ? "can decide" : "view only"}` : ""}
-          </div>
-          <button className="btn btn-nav" onClick={reset}>Reset demo data</button>
-        </div>
-      </nav>
-      <main className="main">
+    <>
+      <main className="main" data-tool={toolKey}>
         <div className="banner" role="note">
-          <strong>Demo environment</strong> — all customers, merchants and amounts are synthetic. Personas are demo-only
-          (no real sign-in). Decisions are recorded here only; no refunds or payments are executed.
+          <strong>Demo environment</strong> — {ui.banner} Personas are demo-only (no real sign-in).
         </div>
         <header className="page-head">
           <div>
@@ -131,7 +170,13 @@ export default function App() {
             <p className="muted">{ui.subtitle}</p>
           </div>
         </header>
-        <SummaryBar summary={summary} statuses={tool?.statuses ?? []} />
+        <SummaryBar
+          summary={summary}
+          statuses={tool?.statuses ?? []}
+          showOverdue={overdueEnabled}
+          showValue={tool?.features.value_summary ?? false}
+          totalLabel={ui.totalLabel}
+        />
         <div className="toolbar">
           <input
             type="search"
@@ -147,11 +192,15 @@ export default function App() {
               <option key={s} value={s}>{cap(s)}</option>
             ))}
           </select>
-          <label className="toggle">
-            <input type="checkbox" checked={overdue} onChange={(e) => setOverdue(e.target.checked)} />
-            Over 48 hours
-          </label>
-          <span className="muted small">{loading ? "Refreshing…" : `${rows.length} shown${overdue ? " · pending over 48h, oldest first" : ""}`}</span>
+          {overdueEnabled && (
+            <label className="toggle">
+              <input type="checkbox" checked={overdue} onChange={(e) => setOverdue(e.target.checked)} />
+              Over 48 hours
+            </label>
+          )}
+          <span className="muted small">
+            {loading ? "Refreshing…" : `${rows.length} shown${overdue && overdueEnabled ? " · pending over 48h, oldest first" : ""}`}
+          </span>
         </div>
         <QueueTable
           columns={tool?.columns ?? []}
@@ -172,9 +221,10 @@ export default function App() {
           persona={persona}
           onClose={close}
           onDecide={decide}
+          reasonPlaceholder={ui.reasonPlaceholder}
+          decisionFootnote={ui.decisionFootnote}
         />
       )}
-      {toast && <div className="toast" role="status">{toast}</div>}
-    </div>
+    </>
   );
 }

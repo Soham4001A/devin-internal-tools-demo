@@ -1,9 +1,16 @@
 # Ops Workbench — internal tools demo
 
-A small internal operations app for a fintech support team. The first module, **Refunds Review**, gives operators a
-queue of refund requests (customer, merchant, amount in USD, reason, owner, submitted time, status) with search, a
-status filter, summary counts and a detail drawer where a reviewer approves or rejects with a required reason and sees a
-timestamped decision history.
+A small internal operations app for a fintech support team with two modules that share one backend workflow and one set
+of UI components, switchable from the sidebar:
+
+- **Refunds Review** (`/refunds`, default `/`) — queue of refund requests (customer, merchant, amount in USD, reason,
+  owner, submitted time, status) with search, status filter, **Over 48 hours** filter and summary counts.
+- **Merchant Reviews** (`/merchant-reviews`) — onboarding operations review queue of 8 fictional merchant cases
+  (merchant name, business category, submitted date, owner, missing documents, review status). This is an operations
+  review mock, **not** KYC/KYB, identity or compliance verification.
+
+In both, a reviewer approves or rejects with a required reason in a detail drawer and sees a timestamped decision
+history; viewers are view-only. Each module has its own records, history, search/filter/selection state and reset.
 
 > **Synthetic demo only.** Every customer, merchant and amount is fictional. No payments or refunds are executed —
 > the app only records a decision. Personas are **demo-only** (a header the browser sends; no real sign-in/SSO). This
@@ -12,7 +19,12 @@ timestamped decision history.
 
 ![Refunds queue baseline](docs/01-queue-baseline.png)
 
-Baseline recording of the main journey: [docs/refunds-e2e-demo-v1.mp4](docs/refunds-e2e-demo-v1.mp4)
+![Merchant Reviews queue](docs/06-merchant-queue.png)
+
+Recordings: [docs/ops-workbench-e2e-demo-v3.mp4](docs/ops-workbench-e2e-demo-v3.mp4) (both modules, merchant decision,
+refunds unchanged) · baseline refunds journey [docs/refunds-e2e-demo-v1.mp4](docs/refunds-e2e-demo-v1.mp4).
+More screenshots: [viewer read-only](docs/07-merchant-viewer-readonly.png),
+[merchant rejected + history](docs/08-merchant-rejected-history.png), [refunds over 48h](docs/04-over-48h.png).
 
 ## Stack
 - `backend/` — FastAPI + SQLite (stdlib `sqlite3`). Owns validation, permissions, state transitions and history.
@@ -21,6 +33,13 @@ Baseline recording of the main journey: [docs/refunds-e2e-demo-v1.mp4](docs/refu
 
 ## Run locally
 Requirements: Python 3.10+, Node 20+.
+
+Quick start (one service on :8000; creates `backend/.venv`, runs `npm ci` + build in `frontend/`, no global installs):
+```bash
+scripts/start-demo.sh                       # HOST=0.0.0.0 PORT=8000 RESET=1 (re-seed all tools) are optional
+```
+
+Manual steps:
 
 ```bash
 # backend
@@ -38,9 +57,9 @@ cd frontend && npm ci && npm run build
 
 ## Tests
 ```bash
-cd backend && .venv/bin/python -m pytest -q          # API: permissions, reason, duplicates, persistence, isolation
+cd backend && .venv/bin/python -m pytest -q          # API: permissions, reason, duplicates, persistence, per-tool isolation
 cd frontend && npm run build && npx eslint src        # type-check + lint
-cd backend && .venv/bin/python ../scripts/e2e.py      # browser journey (needs a running server + Chrome CDP; see script)
+cd backend && .venv/bin/python ../scripts/e2e.py      # browser journey over both modules (needs a running server; see script)
 ```
 
 ## Demo personas (server-controlled, demo-only)
@@ -57,14 +76,15 @@ intended demo behavior, **not** an access-control model.
 - Reason required (≥3 non-space chars) → **422** otherwise.
 - Status update + history row are written in one `BEGIN IMMEDIATE` transaction (with a guarded `UPDATE … WHERE status=?`).
 - Every query is scoped by tool key; reset only touches one tool.
-- "Over 48 hours" filter (`?overdue=true`) and the "Pending over 48h" count include only `pending` requests submitted
+- "Over 48 hours" filter (Refunds only; `?overdue=true` returns 400 for tools without it) (`?overdue=true`) and the "Pending over 48h" count include only `pending` requests submitted
   strictly more than 48h ago, oldest first; approved/rejected never appear. Works together with search and status.
 
 ## Demo reset
 - CLI: `cd backend && .venv/bin/python -m app.seed [--tool refunds]`
-- UI: **Reset demo data** button in the nav (calls `POST /api/demo/reset?tool=refunds`).
+- UI: **Reset demo data** button in the nav resets the **currently open tool only** (`POST /api/demo/reset?tool=<key>`).
 - Disable the endpoint with `DEMO_RESET_ENABLED=false`.
-Seed ages are relative to reset time, so the 4 pending requests older than 48h stay >48h old after each reset.
+Seed ages are relative to reset time, so the 4 pending refunds older than 48h stay >48h old after each reset.
+Merchant seed after reset: 8 cases — 5 pending, 2 approved, 1 rejected.
 
 ## Persistence
 Data lives in SQLite at `DB_PATH` (default `backend/data/app.db`). It survives process restarts on the same disk
@@ -81,5 +101,31 @@ is stored in browser localStorage except the selected demo persona (a UI prefere
 | `FRONTEND_DIST` | `frontend/dist` | Built UI to serve from the API |
 | `VITE_API_BASE_URL` (build-time) | empty (same origin) | Backend URL for a separately hosted frontend |
 
-## Adding another module (e.g. Merchant Reviews)
-See [AGENTS.md](AGENTS.md#adding-a-tool).
+## Per-tool differences
+All behavior differences live in configuration, not forked code: backend `ToolConfig` (`backend/app/tools/<key>.py`)
+and frontend `ToolUi` (`frontend/src/tools/index.ts`). Shared: `records`/`events` tables (scoped by `tool`), decision
+endpoint (persona check, reason ≥3 chars, 409 on repeat, single transaction), queue/drawer/decision/history components.
+
+| | Refunds Review | Merchant Reviews |
+|---|---|---|
+| Key / route | `refunds` / `/refunds` | `merchant_reviews` / `/merchant-reviews` |
+| Columns | request, customer, merchant, amount, reason, owner, submitted, status | case, merchant, business category, submitted, owner, missing documents (`list`), review status |
+| Seed | 12 refunds (`RF-10xx`) | 8 merchant cases (`MR-200x`) |
+| `overdue_filter` | on (Over 48 hours + count) | off (hidden; API 400) |
+| `value_field` | `amount_usd` (Pending value) | none (hidden) |
+| `requester_field` (submitted event actor) | `customer` | `merchant_name` |
+| Statuses / actions | pending → approved / rejected | same |
+| Banner / decision footnote | no refunds or payments executed | operations review only, not KYC/compliance |
+
+## Adding the next tool
+1. Add `backend/app/tools/<key>.py` exporting a `ToolConfig` (columns, detail fields, search fields, statuses, actions,
+   synthetic `seed`, and the `overdue_filter` / `value_field` / `requester_field` switches); register it in
+   `backend/app/tools/__init__.py`. Seeding, reset, the API and the CLI pick it up automatically.
+2. Add a `ToolUi` entry (key, `path`, labels, banner, reason placeholder, footnote) to `frontend/src/tools/index.ts`.
+   The sidebar and route appear automatically; per-tool view state is isolated because `ToolView` is keyed by tool.
+3. Copy `backend/tests/test_merchant_reviews.py` as a template: seed counts, viewer 403, reason 422, decision + 409,
+   cross-tool snapshot isolation, per-tool reset. Extend `scripts/e2e.py` for the new route.
+
+## Limitations
+Synthetic prototype: demo personas (no SSO), SQLite single-node storage, history is not tamper-proof, no notifications or
+document upload; "missing documents" is a static list on the case. Merchant Reviews is not a KYC/KYB or compliance tool.

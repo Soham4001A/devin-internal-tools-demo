@@ -6,16 +6,19 @@ type Props = {
   record: RecordRow;
   persona: Persona | undefined;
   onDecide: (action: string, reason: string) => Promise<void>;
+  reasonPlaceholder: string;
+  footnote: string;
+  recordLabel: string;
 };
 
-export function DecisionPanel({ actions, record, persona, onDecide }: Props) {
+export function DecisionPanel({ actions, record, persona, onDecide, reasonPlaceholder, footnote, recordLabel }: Props) {
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const available = actions.filter((a) => a.from_statuses.includes(record.status));
 
   if (available.length === 0)
-    return <div className="note">This request has been decided. Decisions are final in this prototype.</div>;
+    return <div className="note">This {recordLabel.toLowerCase()} has been decided. Decisions are final in this prototype.</div>;
   if (!persona?.can_decide)
     return (
       <div className="note">
@@ -48,7 +51,7 @@ export function DecisionPanel({ actions, record, persona, onDecide }: Props) {
         rows={3}
         value={reason}
         maxLength={1000}
-        placeholder="e.g. Duplicate charge confirmed against merchant settlement report"
+        placeholder={reasonPlaceholder}
         onChange={(e) => setReason(e.target.value)}
       />
       {error && <div className="inline-error" role="alert">{error}</div>}
@@ -64,7 +67,7 @@ export function DecisionPanel({ actions, record, persona, onDecide }: Props) {
           </button>
         ))}
       </div>
-      <p className="muted small">Records a decision only. No payment is executed.</p>
+      <p className="muted small">{footnote}</p>
     </div>
   );
 }
