@@ -1,0 +1,59 @@
+{
+  "profile_id": "security-profile-3828f266a6d14034900626d43e2660f1",
+  "name": "Internal Tools \u2014 Read-only Review",
+  "net_policy": {
+    "allow": [
+      {
+        "hostname": "git-manager.devin.ai"
+      },
+      {
+        "hostname": "github.com"
+      },
+      {
+        "hostname": "api.github.com"
+      },
+      {
+        "hostname": "raw.githubusercontent.com"
+      },
+      {
+        "hostname": "objects.githubusercontent.com"
+      },
+      {
+        "hostname": "codeload.github.com"
+      },
+      {
+        "hostname": "registry.npmjs.org"
+      },
+      {
+        "hostname": "pypi.org"
+      },
+      {
+        "hostname": "files.pythonhosted.org"
+      },
+      {
+        "hostname": "cdn.playwright.dev"
+      },
+      {
+        "hostname": "playwright.download.prss.microsoft.com"
+      },
+      {
+        "hostname": "storage.googleapis.com"
+      }
+    ]
+  },
+  "mcp_config": {
+    "servers": []
+  },
+  "git_access_level": "read_only",
+  "enforcement_level": "mandatory",
+  "devin_mcp_read_only": true,
+  "remove_github_cli_token": true,
+  "slack_channel_access": null,
+  "slack_dm_scope": null,
+  "teams_channel_access": null,
+  "teams_dm_scope": null,
+  "teams_group_chat_scope": null,
+  "created_at": 1792695939,
+  "updated_at": 1792695981,
+  "org_id": "org-463d9f38349c4b4682d33a1d724fca62"
+}

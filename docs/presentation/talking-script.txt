@@ -1,0 +1,17 @@
+Hi, I’m Soham. You asked whether a sixty-engineer fintech could replace a $250,000 internal-tool platform while adding another ten apps. I tested a smaller question: can Devin build a useful tool, change it, and reuse the foundation? My recommendation is to keep the existing Power Apps workflows and pilot Devin on a new, low-risk tool.
+
+Power Apps gives you more than screens: connectors, managed data, access controls and application lifecycle tooling. Building means owning those responsibilities. Ten more apps also don’t automatically mean ten more license fees, so the first commercial question is how much of that contract you can actually remove.
+
+Let me start with the Playbooks tab. I created four workflows: Create, Update, Variant and Health. This Create Playbook tells Devin what a finished tool needs: working data, server-side checks, tests and a runnable README. Update asks for a small, reviewable change. Variant reuses the existing foundation. Repository instructions carry the app-specific setup and tests between sessions. That setup is engineering work; the benefit is that later requests can describe the business need.
+
+Here’s the completed build session and its refunds dashboard. I can open a request, enter a reason and approve it. The status and history persist together. The viewer persona cannot approve through the API. These identities are selectable demo personas, though—not real authentication—and this action does not move money.
+
+Now the Automations tab. The update workflow connects a request to a Playbook and a fresh session, with an execution identity and a usage limit. The request here was: show pending refunds older than forty-eight hours, oldest first. Here’s the completed session, and here’s the filter. The label trigger didn’t launch during our test, so I ran it manually. That session built the change but couldn’t publish; the original session handled the patch. This needs setup and review before it becomes unattended maintenance.
+
+The Variant session then added Merchant Reviews. Switching tools shows separate records using the same queue, decisions and history. I’d maintain that shared foundation across new tools. Copying entire dashboards creates more places to fix the same bug. The Health workflow also passed the checks, but its delayed start overlapped a manual retry, so dispatch reliability needs a clean retest.
+
+On Security, I’ve added a read-only review profile and attached it to the disabled Health automation. It restricts network destinations, removes the GitHub CLI token and prevents repository writes. This was added after the build; I haven’t tested a session under it. It governs Devin’s access. The app still needs trusted sign-in, durable storage, tamper-resistant audit and production release controls. Our cloud URL is a session preview, not permanent hosting.
+
+The economics depend on ownership. As an illustration, assume $250,000 per loaded engineer, $20,000 annual running costs and $50,000 initial production work. A quarter of an additional engineer puts year one near $133,000; one engineer puts it at $320,000. That’s incremental to today’s Power Apps support work, and it competes with the product roadmap.
+
+I’d run a thirty-day pilot on one read-only dashboard, with a named owner. Measure change turnaround, review and support hours, validate the production controls, and compare those costs with the removable contract spend. If the pilot fails those tests, keep Power Apps and use Devin for supporting integration and test work.

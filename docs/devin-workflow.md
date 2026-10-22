@@ -37,3 +37,7 @@ Session links require access to the personal Devin organization. API-created bui
 - No real payments, customer data, production data connectors, load testing or recovery exercise were included.
 
 The prototype clock began 2026-10-22 17:31:50 UTC. Application changes were merged by 18:02:04 UTC (about 30 minutes); subsequent verification and documentation remained within the two-hour prototype limit. This measures elapsed experiment time, not human effort saved. Interim usage counters were not suitable for a billed-cost claim.
+
+## Security configuration added after the prototype
+
+At the user’s follow-up request, an `Internal Tools — Read-only Review` profile was saved and pinned to the disabled Health automation. It specifies read-only Git, removal of the GitHub CLI token, no external MCP servers, read-only Devin management access, and a restricted network allowlist. Its enforcement level is mandatory when bound. Organization defaults and build workflows were not changed. Saved settings and the automation binding were read back; no session has been tested under this profile. It governs the agent and does not supply application authentication, audit or payment controls. See the [configuration export](presentation/security-profile.json). Earlier session results are not evidence of this profile’s enforcement.
