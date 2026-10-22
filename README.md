@@ -133,3 +133,9 @@ document upload; "missing documents" is a static list on the case. Merchant Revi
 ## Built with Devin
 
 See [the tested Devin workflow](docs/devin-workflow.md) for reusable Playbook templates, completed session/PR links, version tags and the actual setup interventions. The application was built by Devin; orchestration, review and presentation preparation were assisted by Codex.
+
+## Presentation and decisions
+
+- [Key Decisions — one-page PDF](docs/presentation/key-decisions.pdf) ([editable text](docs/presentation/key-decisions.txt)): scope, architecture and tradeoffs for the hiring team.
+- [Five-minute talking script](docs/presentation/talking-script.txt): introduction, Playbooks, Automations, completed app work, security and recommendation.
+- [Security profile export](docs/presentation/security-profile.json): configured after the prototype and attached to the disabled Health automation; runtime enforcement has not been tested.

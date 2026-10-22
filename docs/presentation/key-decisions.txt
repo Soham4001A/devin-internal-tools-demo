@@ -1,0 +1,20 @@
+Key decisions — Ops Workbench
+Soham Sane · Cognition take-home · 22 October 2026
+
+Test the next change as well as the first build
+I chose a refunds review queue because one workflow exercises filtering, persisted state, permissions, validation and decision history. I held the overdue filter out of the initial build so a fresh session would have to understand and change existing code. Merchant Reviews then tested whether a second tool could reuse the foundation. This was a more useful experiment for ten planned apps than building three disconnected mockups or attempting a visual app designer.
+
+Keep the runtime small
+React/TypeScript handles the interface; FastAPI validates actions and serves the built frontend; SQLite stores records and history. One service made setup and browser verification straightforward within the timebox. A status change and its history entry commit in one transaction, and repeated decisions return a conflict. SQLite avoided provisioning work, but it leaves durable hosting, backups, migrations and multi-instance operation unresolved. The data layer is a prototype choice, not a production recommendation.
+
+Reuse the workflow, separate the records
+The two tools share queue, detail, decision and history components. Configuration supplies fields, labels, fixtures and optional features such as the refunds-only overdue filter. Queries and resets are scoped by tool. I preferred this to copying the application because a common fix should have one implementation. The tradeoff is that changes can affect both tools. Isolation tests and the browser walkthrough cover that risk; two related queues do not prove this design fits every future internal app.
+
+Put repeatable work in the repository and Playbooks
+Create, Update, Variant and Health Playbooks define the task; AGENTS.md and a repository Skill define setup, invariants and checks. Fresh sessions and version tags expose whether handoff works. The update automation produced a tested patch but lacked GitHub write access, so the original session published it. The label trigger was not demonstrated. The health run passed, but a delayed start overlapped a manual retry. These are setup and review costs, not evidence of unattended operation.
+
+Make the shortcuts explicit
+All records are synthetic; no payments, document verification or production connectors exist. The client can select the reviewer identity, history is mutable, and reset is deliberately available. Native deployment was unavailable, so the cloud preview depends on the session. A read-only security profile was added after the experiment and pinned to the disabled Health automation; its runtime enforcement has not been tested. That profile governs Devin, not application users.
+
+What I would carry forward
+Application changes took about 30 minutes; the initial experiment, including verification, took about 38. Independent checks passed 26 backend tests, frontend build/lint and both browser workflows. Devin wrote the app; Codex assisted orchestration, review and presentation. I would carry forward the shared components and repeatable change workflow, then replace the demo identity and operating model in one small pilot. I would not infer the cost of replacing Power Apps from this prototype’s build time.
