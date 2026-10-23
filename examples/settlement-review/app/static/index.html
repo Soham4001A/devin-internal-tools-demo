@@ -23,6 +23,7 @@ input,textarea,select{font:inherit;padding:8px;border:1px solid var(--line);bord
 .kv{display:grid;grid-template-columns:140px 1fr;gap:4px 10px}.kv div:nth-child(odd){color:var(--mute)}
 .side{display:flex;flex-direction:column;gap:16px}ul{margin:6px 0;padding-left:18px}ol{margin:6px 0;padding-left:20px}
 .counts span{margin-right:12px}.hidden{display:none}.tiny{font-size:12px}
+.comparison{grid-column:1/-1;border-color:#b9c9f0;background:#f8faff}.comparison summary{cursor:pointer;font-weight:700;font-size:16px}.comparison p{max-width:900px}.comparison .lead{font-size:15px;margin:8px 0;color:#344054}.routes{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}.route{background:#fff;border:1px solid var(--line);border-radius:8px;padding:14px}.route h3{margin-top:0;color:var(--ink)}.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.flow b{background:#edf2ff;padding:8px 10px;border-radius:6px;font-size:12px}.flow .bridge{background:#fff0d6}.comparison a{color:#244aba}.comparison button{margin-right:10px}.proof{margin:10px 0 0;padding:10px 12px;background:#edf2ff;border-radius:6px;min-height:40px}.comparison details{margin-top:8px}.comparison .footnote{color:#475467;font-size:12px}@media(max-width:850px){main,.routes{grid-template-columns:1fr}.kv{grid-template-columns:110px 1fr}}
 </style></head><body>
 <div class="banner"><b>Synthetic demo.</b> All merchants, accounts and amounts are fictional. No payments are moved — decisions are only recorded.
 The <b>Risk Vendor is a SIMULATED local service</b> (real HTTP + OAuth exchange, fictional scores), not a live third-party integration.
@@ -41,6 +42,20 @@ Sign-in uses public demo accounts — <b>not SSO or production identity</b>.</di
 </section>
 
 <main id="appView" class="hidden">
+  <section class="card comparison" aria-label="Integration comparison">
+    <details id="comparisonDetails" open>
+      <summary>Why build this integration in code?</summary>
+      <p class="lead"><b>This app connects to a vendor as a service, without asking each reviewer to sign in to that vendor.</b> It uses OAuth client credentials: the backend exchanges its own credentials for a short-lived access token.</p>
+      <div class="routes">
+        <div class="route"><h3>This demo: direct backend integration</h3><div class="flow" aria-label="Reviewer to app backend to vendor"><b>Reviewer</b><span aria-hidden="true">→</span><b>App backend</b><span aria-hidden="true">→</span><b>Risk vendor</b></div><p class="tiny muted">Our backend handles the token exchange, renewal and vendor calls. The browser gets the risk result, not the vendor credentials.</p></div>
+        <div class="route"><h3>Power Apps: an intermediary approach</h3><div class="flow" aria-label="Power Apps to custom connector to intermediary backend to vendor"><b>Power Apps</b><span aria-hidden="true">→</span><b>Custom connector</b><span aria-hidden="true">→</span><b class="bridge">Intermediary backend</b><span aria-hidden="true">→</span><b>Vendor</b></div><p class="tiny muted">Microsoft documents that custom connectors do not support this OAuth grant directly. An intermediary, such as an Azure Function, can perform the exchange.</p></div>
+      </div>
+      <p><b>The tradeoff:</b> direct control over the integration, with responsibility for its security, reliability and maintenance. Power Platform can support the scenario with a workaround; this is not an exclusive capability.</p>
+      <button id="runIntegrationDemo" class="primary" type="button">Run a live connection check</button><span class="tiny muted">Reads one exception in your tenant. Does not approve it or change any record.</span>
+      <p id="integrationProof" class="proof" role="status" aria-live="polite">Ready to request a risk result from the simulated vendor through this app’s backend.</p>
+      <p class="footnote"><b>Demo boundary:</b> the vendor and scores are simulated; the HTTP requests and authentication checks are real. Tokens may be reused from the backend cache. User permissions are a separate part of the demo and are not claimed as unique to this app. <a href="https://learn.microsoft.com/en-us/connectors/custom-connectors/faq#requirements" target="_blank" rel="noopener noreferrer">Read Microsoft’s documented limitation ↗</a></p>
+    </details>
+  </section>
   <div class="card">
     <h2 id="queueTitle">Settlement exceptions</h2>
     <div class="counts muted tiny" id="counts"></div>

@@ -113,3 +113,7 @@ runtime controls are covered in [docs/governance.md](docs/governance.md).
 ## Independent review after Devin delivery
 
 Devin built this sample and fixed the shared-connection transaction race, vendor error forwarding and access-panel wording during review. Codex then added two small vendor-response guards (reject non-string risk bands and check credential echoes before truncating display text), with regressions that failed on the delivered code. The final local verification passes **28 tests** and **14 real HTTP smoke checks**; the original Devin artifact reports 27 tests. This is a separately timed follow-up to the original prototype, not part of its reported build time.
+
+## Explain the integration in the app
+
+The “Why build this integration in code?” panel compares the direct backend path with a Power Apps custom-connector/intermediary approach. Its **Run a live connection check** button reads the first exception in the signed-in user's tenant and requests its risk result through the backend; it does not decide or update a settlement. The result identifies the simulated vendor and possible token-cache reuse. The panel links to Microsoft's documented client-credentials limitation and explicitly acknowledges that Power Platform can support the scenario through a workaround. Collapse the panel to focus on the queue.

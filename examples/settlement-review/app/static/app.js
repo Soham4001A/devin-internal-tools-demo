@@ -27,6 +27,7 @@ $("loginForm").addEventListener("submit", async (e) => {
 });
 
 async function showApp() {
+  $("integrationProof").textContent = "Ready to request a risk result from the simulated vendor through this app’s backend.";
   $("login").classList.add("hidden"); $("appView").classList.remove("hidden");
   $("who").innerHTML = `${esc(ME.display_name)} · ${esc(ME.role_label)} · ${esc(ME.tenant_name)} <button id="logout">Sign out</button>`;
   $("logout").onclick = async () => { await api("/api/logout", {method: "POST"}); SEL = null; $("detail").classList.add("hidden"); showLogin(); };
@@ -69,6 +70,7 @@ async function openDetail(id) {
     $("approve").onclick = () => decide(d.id, "approve"); $("reject").onclick = () => decide(d.id, "reject");
   }
   await loadHistory(id);
+  return d;
 }
 
 async function decide(id, action) {
@@ -93,4 +95,20 @@ async function loadIntegration() {
     <button id="recheck">Re-check connection</button>`;
   $("recheck").onclick = loadIntegration;
 }
+$("runIntegrationDemo").addEventListener("click", async () => {
+  const button = $("runIntegrationDemo"), proof = $("integrationProof");
+  const first = document.querySelector("tr.row");
+  if (!first || !ME) { proof.textContent = "Sign in and load your queue first."; return; }
+  button.disabled = true;
+  proof.textContent = "Requesting a risk result through the backend…";
+  try {
+    const record = await openDetail(first.dataset.id);
+    await loadIntegration();
+    proof.textContent = record?.risk?.status === "available"
+      ? `Live check passed for ${record.id}: the backend received a risk score of ${record.risk.score}/100 from the simulated vendor over HTTP. The vendor token stays on the server and may have been reused from cache. See the exception details below.`
+      : "The check could not return a risk result. Check your sign-in and the vendor connection below; no success result has been substituted.";
+  } catch {
+    proof.textContent = "Connection check failed. Check that the app and simulated vendor are running, then try again.";
+  } finally { button.disabled = false; }
+});
 boot();
