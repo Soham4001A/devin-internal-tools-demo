@@ -136,9 +136,10 @@ See [the tested Devin workflow](docs/devin-workflow.md) for reusable Playbook te
 
 ## Presentation and decisions
 
+- [Presentation webpage](docs/presentation/recording-guide.html): seven informational sections, integration examples, demo links and expandable presenter resources. Open the HTML locally or serve the repository to view it.
 - [Key Decisions — one-page PDF](docs/presentation/key-decisions.pdf) ([editable text](docs/presentation/key-decisions.txt)): scope, architecture and tradeoffs for the hiring team.
 - [Five-minute talking script](docs/presentation/talking-script.txt): introduction, Playbooks, Automations, completed app work, security and recommendation.
-- [Security profile export](docs/presentation/security-profile.json): configured after the prototype and attached to the disabled Health automation; runtime enforcement has not been tested.
+- [Security profile export](docs/presentation/security-profile.json): configured after the original prototype and bound to the disabled Health and integration automations; follow-up probes did not conclusively establish enforcement.
 
 ## Follow-up: controlled integration and access
 
