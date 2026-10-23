@@ -1,32 +1,53 @@
-Key decisions — Make the next tool easier.
+Key Decisions — Devin for internal tools
 Soham Sane / Cognition take-home
 
-I tested the work after the first build: changing a refunds queue, reusing it for merchant reviews, and adding a separate settlement app with a custom integration.
+I tested creation, change and reuse: a refunds queue, a merchant variant, and a separate settlement integration. The question is whether the next tool becomes easier to own.
 
-A repeatable way to build and change
-Request (plain language) → Playbook (scope + checks) → Devin session (build + test) → Human review (publish changes)
+Your workflow → Reusable brief → Devin session → Human review
 
-Two small proofs
-Reuse a foundation: Refunds + Merchants → shared screens, rules and history. React + Python + SQLite; separate records.
-Own an integration: Settlement review → app backend → mock vendor. Server-held credentials; scoped tokens. Local sign-in, roles and tenant checks.
+01 What is Devin?
+• An AI software engineer that edits code, runs checks and uses a browser in a cloud environment.
+• Requests and feedback can be conversational; the result is reviewable code your team owns.
+• It reduces implementation effort. Engineering still owns correctness and operation.
 
-The choices that matter
+02 Refunds Review: the first build
+• A queue to search requests, approve or reject with a reason, and inspect decision history.
+• A fresh session added an overdue filter. Merchant Reviews reused the base with separate records.
+• Shared screens and rules avoid copied apps, but changes need regression checks. Data and personas are fictional.
 
-Test the second request, not just the first screen.
-Refunds cover search, decisions and history. A fresh session added an overdue filter; merchant reviews reused the base. Shared code saves duplication, but changes can affect both apps.
+03 Customize around your workflow
+• Connect GitHub and provide project instructions so Devin follows your build and review process.
+• Keep data in AWS or your existing database. Configure APIs, tools, credentials and network access; cloud access can use temporary OIDC credentials.
+• Jira can hand off work and receive results. Connected Teams users can ask questions and give feedback in conversation.
+• Ask for a browser video, review the behavior, then request a change. Jira, Teams and AWS are documented capabilities, not connections tested here.
 
-Use code where the integration needs it.
-Settlement uses OAuth client credentials on the backend. Power Apps custom connectors do not support that grant directly; an intermediary is possible. The benefit is control, with another service to maintain.
+04 Playbooks: repeatable instructions
+• Create, Update, Variant and Health capture recurring tasks and what “done” means.
+• Repository instructions carry setup and checks between sessions. Playbooks guide work; they do not enforce permissions.
 
-Separate app access from Devin access.
-Settlement checks roles and tenants on the server. Devin has a restricted profile; the automation is configured for approved requesters. Playbooks guide work and tags organize it. Neither grants permission.
+05 Settlement: own the connection
+• A separate follow-up calls a mock risk vendor with server-held OAuth client credentials.
+• Power Apps custom connectors do not support that grant directly. An intermediary is possible; our backend provides control and adds maintenance.
+• The app enforces roles and tenant boundaries on the server. Those controls are also possible in Power Platform.
 
-What this proves — and what it leaves open
-Working changes, reuse and a simulated integration. Synthetic accounts and SQLite kept scope small. Production identity, protected audit history, hosting and backups remain. Automatic trigger filtering and profile enforcement need conclusive tests.
+06 Automations and session controls
+• Events or schedules can launch work. Our configuration filters requesters and limits session access and usage.
+• Tags organize sessions; app roles, Devin access and release permissions are separate controls.
+• Runs used manual intervention. Trigger filtering and profile enforcement still need conclusive tests.
 
-My next step: Keep Power Apps; pilot one new, low-risk tool. Measure review and support time before trading the license bill for engineering ownership.
+07 Limits compared with Power Apps
+• Managed data, identity, governance and release tooling are part of the platform’s value.
+• Custom apps need hosting, backups, security and support. Fast creation alone does not prove a saving.
 
-Settlement follow-up timed separately. Tests, HTTP checks and browser journeys passed locally.
-Devin was the primary builder; Codex assisted orchestration, review, fixes and presentation.
-Source: https://github.com/Soham4001A/devin-internal-tools-demo
-Microsoft: https://learn.microsoft.com/en-us/connectors/custom-connectors/faq#requirements
+My recommendation: keep Power Apps; pilot the next tool.
+Run a 30-day pilot on one new, low-risk tool with a named owner. Measure review and support time, validate production controls, and compare ownership cost with the license spend you can actually remove.
+
+Devin built the apps; Codex assisted orchestration, review, fixes and presentation. Synthetic data throughout. Settlement follow-up timed separately. Local checks and browser journeys passed.
+
+Sources
+Repository: https://github.com/Soham4001A/devin-internal-tools-demo
+Integrations: https://docs.devin.ai/integrations/overview
+Teams: https://docs.devin.ai/integrations/microsoft-teams
+Cloud access: https://docs.devin.ai/product-guides/oidc
+Recordings: https://docs.devin.ai/work-with-devin/testing-and-recordings
+Connector limitation: https://learn.microsoft.com/en-us/connectors/custom-connectors/faq#requirements
