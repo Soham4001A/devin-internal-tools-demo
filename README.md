@@ -139,3 +139,7 @@ See [the tested Devin workflow](docs/devin-workflow.md) for reusable Playbook te
 - [Key Decisions — one-page PDF](docs/presentation/key-decisions.pdf) ([editable text](docs/presentation/key-decisions.txt)): scope, architecture and tradeoffs for the hiring team.
 - [Five-minute talking script](docs/presentation/talking-script.txt): introduction, Playbooks, Automations, completed app work, security and recommendation.
 - [Security profile export](docs/presentation/security-profile.json): configured after the prototype and attached to the disabled Health automation; runtime enforcement has not been tested.
+
+## Follow-up: controlled integration and access
+
+The separately timed [Settlement Review sample](examples/settlement-review/README.md) demonstrates a simulated external vendor using OAuth client credentials, server-enforced demo roles and tenant isolation, and a restricted Devin automation that returns a patch for human publication. Its [governance notes](examples/settlement-review/docs/governance.md) distinguish configured controls from observed behavior. The vendor is simulated; the HTTP exchange and access checks are real. This extension does not change the original app or retroactively expand its reported build time.

@@ -25,7 +25,7 @@ Keep a person in the loop.
 Playbooks guide Create, Update, Variant and Health tasks. The update needed a publishing handoff, and automatic triggers were not conclusively proven.
 
 A useful prototype. Still a production gap.
-Synthetic data and selectable demo roles kept the build small. Real sign-in, protected audit records, reliable hosting and backups still need engineering. The later Devin security profile is configured, but untested; it does not secure the app itself.
+Synthetic data and selectable demo roles kept the build small. Real sign-in, protected audit records, reliable hosting and backups still need engineering. The later Devin security profile needs a clean enforcement test; it does not secure the app itself.
 
 My next step: keep Power Apps and pilot one low-risk, read-only tool before deciding whether the ongoing ownership cost is worth it.
 

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Settlement Review (demo)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{--bg:#f5f6f8;--card:#fff;--ink:#1d2433;--mute:#667085;--line:#e4e7ec;--acc:#3056d3;--ok:#127a4b;--bad:#b42318;--warn:#b54708}
+*{box-sizing:border-box}body{margin:0;font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+.banner{background:#fff4e5;border-bottom:1px solid #f5c88a;padding:8px 20px;font-size:13px;color:#7a4b00}
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--card);border-bottom:1px solid var(--line)}
+h1{font-size:18px;margin:0}h2{font-size:15px;margin:0 0 10px}h3{font-size:13px;margin:14px 0 6px;color:var(--mute);text-transform:uppercase;letter-spacing:.04em}
+main{display:grid;grid-template-columns:1.25fr 1fr;gap:16px;padding:16px 20px;max-width:1280px;margin:auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);font-size:13px}
+th{color:var(--mute);font-weight:600}tr.row{cursor:pointer}tr.row:hover,tr.sel{background:#eef2ff}
+.pill{display:inline-block;padding:2px 8px;border-radius:99px;font-size:12px;font-weight:600}
+.open{background:#eef2ff;color:var(--acc)}.approved{background:#e7f6ee;color:var(--ok)}.rejected{background:#fdecea;color:var(--bad)}
+.connected{background:#e7f6ee;color:var(--ok)}.unavailable{background:#fdecea;color:var(--bad)}
+.low{color:var(--ok)}.medium{color:var(--warn)}.high{color:var(--bad)}
+button{font:inherit;border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 12px;cursor:pointer}
+button.primary{background:var(--acc);border-color:var(--acc);color:#fff}button.danger{background:var(--bad);border-color:var(--bad);color:#fff}
+button:disabled{opacity:.5;cursor:not-allowed}
+input,textarea,select{font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;width:100%}
+.login{max-width:420px;margin:60px auto}.muted{color:var(--mute)}.err{color:var(--bad);min-height:18px}.ok{color:var(--ok)}
+.kv{display:grid;grid-template-columns:140px 1fr;gap:4px 10px}.kv div:nth-child(odd){color:var(--mute)}
+.side{display:flex;flex-direction:column;gap:16px}ul{margin:6px 0;padding-left:18px}ol{margin:6px 0;padding-left:20px}
+.counts span{margin-right:12px}.hidden{display:none}.tiny{font-size:12px}
+</style></head><body>
+<div class="banner"><b>Synthetic demo.</b> All merchants, accounts and amounts are fictional. No payments are moved — decisions are only recorded.
+The <b>Risk Vendor is a SIMULATED local service</b> (real HTTP + OAuth exchange, fictional scores), not a live third-party integration.
+Sign-in uses public demo accounts — <b>not SSO or production identity</b>.</div>
+<header><h1>Settlement Review</h1><div id="who" class="muted"></div></header>
+
+<section id="login" class="card login">
+  <h2>Sign in (demo accounts)</h2>
+  <form id="loginForm">
+    <label>Username<input id="u" autocomplete="username" required></label><br><br>
+    <label>Password<input id="p" type="password" autocomplete="current-password" required></label><br><br>
+    <button class="primary" type="submit">Sign in</button>
+    <div id="loginErr" class="err"></div>
+  </form>
+  <p class="tiny muted">Public synthetic credentials: viewer.a / viewer-a-demo · operator.a / operator-a-demo · operator.b / operator-b-demo</p>
+</section>
+
+<main id="appView" class="hidden">
+  <div class="card">
+    <h2 id="queueTitle">Settlement exceptions</h2>
+    <div class="counts muted tiny" id="counts"></div>
+    <table><thead><tr><th>ID</th><th>Counterparty</th><th>Type</th><th>Amount</th><th>Account</th><th>Status</th></tr></thead>
+      <tbody id="rows"></tbody></table>
+    <div id="detail" class="hidden">
+      <h3>Exception detail</h3>
+      <div class="kv" id="kv"></div>
+      <h3>Risk Vendor enrichment (simulated)</h3>
+      <div id="risk"></div>
+      <h3>Decision</h3>
+      <div id="decision"></div>
+      <h3>History</h3>
+      <div id="history"></div>
+    </div>
+  </div>
+  <div class="side">
+    <div class="card"><h2>Your access</h2><div id="access"></div></div>
+    <div class="card"><h2>Risk Vendor connection <span id="connPill" class="pill"></span></h2><div id="integration"></div></div>
+  </div>
+</main>
+<script src="/app.js"></script>
+</body></html>
