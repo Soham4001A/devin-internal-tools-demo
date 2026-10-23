@@ -1,34 +1,32 @@
 Key decisions — Make the next tool easier.
 Soham Sane / Cognition take-home
 
-I built a refunds queue, changed it in a fresh Devin session, then reused it for merchant reviews. The real test was whether the second task became easier.
+I tested the work after the first build: changing a refunds queue, reusing it for merchant reviews, and adding a separate settlement app with a custom integration.
 
-The change workflow
-Describe a task → Use a Playbook → Devin builds → Review & merge
-Plain-language request → Repeatable instructions → Code + checks → Human approval
+A repeatable way to build and change
+Request (plain language) → Playbook (scope + checks) → Devin session (build + test) → Human review (publish changes)
 
-The app we built
-Refunds review: approve, reject, find overdue requests.
-Merchant review: same foundation, separate records.
-Both share an interface, decision rules and history.
-React interface / Python service / SQLite database.
+Two small proofs
+Reuse a foundation: Refunds + Merchants → shared screens, rules and history. React + Python + SQLite; separate records.
+Own an integration: Settlement review → app backend → mock vendor. Server-held credentials; scoped tokens. Local sign-in, roles and tenant checks.
 
-Why I chose this scope
+The choices that matter
 
-Start with one real workflow.
-Refunds exercise search, decisions and history in one small app. I saved the overdue filter for a later session to test maintenance as well as creation.
+Test the second request, not just the first screen.
+Refunds cover search, decisions and history. A fresh session added an overdue filter; merchant reviews reused the base. Shared code saves duplication, but changes can affect both apps.
 
-Reuse the foundation.
-Merchant reviews reuse the same screens and rules, with separate records. That avoids maintaining copies, but a shared change can affect both tools.
+Use code where the integration needs it.
+Settlement uses OAuth client credentials on the backend. Power Apps custom connectors do not support that grant directly; an intermediary is possible. The benefit is control, with another service to maintain.
 
-Keep a person in the loop.
-Playbooks guide Create, Update, Variant and Health tasks. The update needed a publishing handoff, and automatic triggers were not conclusively proven.
+Separate app access from Devin access.
+Settlement checks roles and tenants on the server. Devin has a restricted profile; the automation is configured for approved requesters. Playbooks guide work and tags organize it. Neither grants permission.
 
-A useful prototype. Still a production gap.
-Synthetic data and selectable demo roles kept the build small. Real sign-in, protected audit records, reliable hosting and backups still need engineering. The later Devin security profile needs a clean enforcement test; it does not secure the app itself.
+What this proves — and what it leaves open
+Working changes, reuse and a simulated integration. Synthetic accounts and SQLite kept scope small. Production identity, protected audit history, hosting and backups remain. Automatic trigger filtering and profile enforcement need conclusive tests.
 
-My next step: keep Power Apps and pilot one low-risk, read-only tool before deciding whether the ongoing ownership cost is worth it.
+My next step: Keep Power Apps; pilot one new, low-risk tool. Measure review and support time before trading the license bill for engineering ownership.
 
-Checked: 26 backend tests + frontend checks + browser walkthroughs.
-Devin built the app; Codex assisted orchestration, review and presentation.
+Settlement follow-up timed separately. Tests, HTTP checks and browser journeys passed locally.
+Devin was the primary builder; Codex assisted orchestration, review, fixes and presentation.
 Source: https://github.com/Soham4001A/devin-internal-tools-demo
+Microsoft: https://learn.microsoft.com/en-us/connectors/custom-connectors/faq#requirements
