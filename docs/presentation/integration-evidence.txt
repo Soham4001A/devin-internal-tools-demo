@@ -1,0 +1,44 @@
+Controlled integration follow-up — verified results
+
+Session: https://app.devin.ai/sessions/ac4adcaad5214f4faf89ce3cd08f53aa
+Automation: https://app.devin.ai/automations/9258c52727134d86a5cd66f13d4d4d24
+Playbook: https://app.devin.ai/settings/playbooks/ac706245dea24a5fab1bda448e1eda50
+Source: examples/settlement-review/ in Soham4001A/devin-internal-tools-demo
+Prepared workstation: http://localhost:8766 (START-SETTLEMENT-DEMO.cmd)
+Repository launcher defaults to port 9010; use SR_APP_PORT=8766 for the Windows port conflict observed here.
+
+What works
+- A separate simulated vendor issues scoped, expiring OAuth client-credentials tokens; the app backend calls it over HTTP.
+- Server-owned roles/tenants; password verification; expiring server sessions; HttpOnly/SameSite cookies; CSRF checks; logout invalidation.
+- Viewer account fields are redacted on the server. A forged role header/body still gets 403 for decisions.
+- Cross-tenant detail, history and actions return404; operator decisions require a reason and persist with history.
+- Concurrent decisions produce one winner and one history entry; later requests get409.
+- Vendor downtime/malformed responses show unavailable. Credential echoes are rejected before display truncation.
+
+Final independent verification
+- 28 tests passed (Python3.13): includes negative authorization, tenant isolation, concurrency, token scope/expiry and vendor-response failures.
+- 14/14 real HTTP smoke checks passed, including ten concurrent decisions: one200, nine409s, one history row.
+- Browser journey passed: incorrect login, viewer redaction/forged-role403, operator decision+history, other-tenant404.
+- Windows host reached the final localhost:8766 app with HTTP200.
+- Original refunds/merchant application code was not changed. Its earlier 26-test result is separate.
+- The Starlette/httpx TestClient deprecation warning is non-failing; dependencies are demo requirements, not a production lockfile.
+
+Devin execution controls
+Configured and read back: read-only Git profile, GitHub CLI credential removed, no external MCP, read-only Devin management access, outbound allowlist, 16-ACU run cap, one invocation/hour and one concurrent run.
+Observed in the session: no GitHub CLI login; Git proxy returned403 for reads and a push dry-run; example.com DNS lookup failed while an allowlisted GitHub URL returned200.
+These observations do NOT isolate enforcement of the read-only Git or network policy. No actual push was attempted. The public source was read through the allowed GitHub API. No production-data credentials were supplied; the sandbox has synthetic fixtures and generated development credentials.
+The automation is disabled after the demonstration. Its GitHub trigger filters require the exact repo, a new comment by Soham4001A, /devin-approved followed by a space, and an issue title beginning [integration-demo]. This run was manual, which bypasses those filters. Live acceptance/rejection of trigger events is UNVERIFIED. Manual-run permissions and admin bypass are separate paths; no second-user enterprise RBAC test was performed.
+Tags identify sessions; they are not permissions. No repository-wide branch protection or required-review policy was enabled by this demo.
+
+Timing and authorship
+This is a separately timed follow-up, not part of the original ~38-minute experiment. Session created 2026-10-23 00:35:40UTC. Devin delivered the reviewed artifact at00:49:00UTC (~13m20s). Local independent checks and publication followed. Wall time is not a measure of human engineering effort or billed cost.
+Devin wrote the sample and fixed the transaction, error handling and permissions-panel issues found in review. Codex orchestrated/reviewed, then added two small vendor-response guards and associated regressions, plus configurable local port and presentation materials. Publication used the user's separate GitHub identity; Devin did not publish from the restricted session.
+
+Limits
+The vendor is simulated, not a completed live third-party integration. All demo accounts/passwords are public synthetic fixtures, not SSO. Local HTTP cookies do not use Secure; there is no MFA/rate limiting/lockout; SQLite history is mutable. No real payments, production data, durable deployment or compliance claim.
+
+Accurate Power Apps claim
+Microsoft's custom connector FAQ documents client-credentials grant as unsupported directly. Power Platform can still implement the scenario through an intermediary/backend. The comparison is direct backend flexibility versus extra integration plumbing and ownership—not an impossible-to-replicate feature.
+https://learn.microsoft.com/en-us/connectors/custom-connectors/faq
+https://docs.devin.ai/product-guides/security-profiles
+https://docs.devin.ai/product-guides/automations
