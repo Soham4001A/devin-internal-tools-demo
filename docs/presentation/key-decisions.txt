@@ -1,20 +1,34 @@
-Key decisions — Ops Workbench
-Soham Sane · Cognition take-home · 22 October 2026
+Key decisions — Make the next tool easier.
+Soham Sane / Cognition take-home
 
-Test the next change as well as the first build
-I chose a refunds review queue because one workflow exercises filtering, persisted state, permissions, validation and decision history. I held the overdue filter out of the initial build so a fresh session would have to understand and change existing code. Merchant Reviews then tested whether a second tool could reuse the foundation. This was a more useful experiment for ten planned apps than building three disconnected mockups or attempting a visual app designer.
+I built a refunds queue, changed it in a fresh Devin session, then reused it for merchant reviews. The real test was whether the second task became easier.
 
-Keep the runtime small
-React/TypeScript handles the interface; FastAPI validates actions and serves the built frontend; SQLite stores records and history. One service made setup and browser verification straightforward within the timebox. A status change and its history entry commit in one transaction, and repeated decisions return a conflict. SQLite avoided provisioning work, but it leaves durable hosting, backups, migrations and multi-instance operation unresolved. The data layer is a prototype choice, not a production recommendation.
+The change workflow
+Describe a task → Use a Playbook → Devin builds → Review & merge
+Plain-language request → Repeatable instructions → Code + checks → Human approval
 
-Reuse the workflow, separate the records
-The two tools share queue, detail, decision and history components. Configuration supplies fields, labels, fixtures and optional features such as the refunds-only overdue filter. Queries and resets are scoped by tool. I preferred this to copying the application because a common fix should have one implementation. The tradeoff is that changes can affect both tools. Isolation tests and the browser walkthrough cover that risk; two related queues do not prove this design fits every future internal app.
+The app we built
+Refunds review: approve, reject, find overdue requests.
+Merchant review: same foundation, separate records.
+Both share an interface, decision rules and history.
+React interface / Python service / SQLite database.
 
-Put repeatable work in the repository and Playbooks
-Create, Update, Variant and Health Playbooks define the task; AGENTS.md and a repository Skill define setup, invariants and checks. Fresh sessions and version tags expose whether handoff works. The update automation produced a tested patch but lacked GitHub write access, so the original session published it. The label trigger was not demonstrated. The health run passed, but a delayed start overlapped a manual retry. These are setup and review costs, not evidence of unattended operation.
+Why I chose this scope
 
-Make the shortcuts explicit
-All records are synthetic; no payments, document verification or production connectors exist. The client can select the reviewer identity, history is mutable, and reset is deliberately available. Native deployment was unavailable, so the cloud preview depends on the session. A read-only security profile was added after the experiment and pinned to the disabled Health automation; its runtime enforcement has not been tested. That profile governs Devin, not application users.
+Start with one real workflow.
+Refunds exercise search, decisions and history in one small app. I saved the overdue filter for a later session to test maintenance as well as creation.
 
-What I would carry forward
-Application changes took about 30 minutes; the initial experiment, including verification, took about 38. Independent checks passed 26 backend tests, frontend build/lint and both browser workflows. Devin wrote the app; Codex assisted orchestration, review and presentation. I would carry forward the shared components and repeatable change workflow, then replace the demo identity and operating model in one small pilot. I would not infer the cost of replacing Power Apps from this prototype’s build time.
+Reuse the foundation.
+Merchant reviews reuse the same screens and rules, with separate records. That avoids maintaining copies, but a shared change can affect both tools.
+
+Keep a person in the loop.
+Playbooks guide Create, Update, Variant and Health tasks. The update needed a publishing handoff, and automatic triggers were not conclusively proven.
+
+A useful prototype. Still a production gap.
+Synthetic data and selectable demo roles kept the build small. Real sign-in, protected audit records, reliable hosting and backups still need engineering. The later Devin security profile is configured, but untested; it does not secure the app itself.
+
+My next step: keep Power Apps and pilot one low-risk, read-only tool before deciding whether the ongoing ownership cost is worth it.
+
+Checked: 26 backend tests + frontend checks + browser walkthroughs.
+Devin built the app; Codex assisted orchestration, review and presentation.
+Source: https://github.com/Soham4001A/devin-internal-tools-demo
