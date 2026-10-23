@@ -1,7 +1,7 @@
 Key Decisions — Devin for internal tools
 Soham Sane / Cognition take-home
 
-I tested creation, change and reuse: a refunds queue, a merchant variant, and a separate settlement integration. The question is whether the next tool becomes easier to own.
+A practical evaluation of building, changing and reusing internal tools, with refunds, merchant reviews and settlement integration as working examples.
 
 Your workflow → Reusable brief → Devin session → Human review
 
@@ -39,7 +39,7 @@ Your workflow → Reusable brief → Devin session → Human review
 • Managed data, identity, governance and release tooling are part of the platform’s value.
 • Custom apps need hosting, backups, security and support. Fast creation alone does not prove a saving.
 
-My recommendation: keep Power Apps; pilot the next tool.
+Our recommendation: keep Power Apps; pilot the next tool.
 Run a 30-day pilot on one new, low-risk tool with a named owner. Measure review and support time, validate production controls, and compare ownership cost with the license spend you can actually remove.
 
 Devin built the apps; Codex assisted orchestration, review, fixes and presentation. Synthetic data throughout. Settlement follow-up timed separately. Local checks and browser journeys passed.
